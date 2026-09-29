@@ -167,14 +167,24 @@
     clearError();
     const btn=$('analyzeBtn');
     try{
-      validate();
+      const meta=validate();
       btn.disabled=true; btn.innerHTML='<span class="loading"></span>Analyzing image...';
-      const fd=new FormData();
-      fd.append('product_json',$('productJson').value);
-      if(mode==='file') fd.append('image',$('imageFile').files[0]);
-      if(mode==='url') fd.append('image_url',$('imageUrl').value.trim());
-      if(mode==='base64') fd.append('image_base64',$('imageBase64').value.trim());
-      const r=await fetch(apiBase()+'/analyze',{method:'POST',body:fd});
+      let r;
+      if(mode==='file'){
+        const fd=new FormData();
+        fd.append('product_json',$('productJson').value);
+        fd.append('image',$('imageFile').files[0]);
+        r=await fetch(apiBase()+'/analyze',{method:'POST',body:fd});
+      }else{
+        const image = mode==='url'
+          ? {url:$('imageUrl').value.trim()}
+          : {base64:$('imageBase64').value.trim()};
+        r=await fetch(apiBase()+'/analyze-json',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({image,product_json:meta})
+        });
+      }
       let data; try{ data=await r.json(); }catch{ data={detail:'Server returned a non-JSON response.'}; }
       if(!r.ok) throw new Error(typeof data.detail==='string'?data.detail:JSON.stringify(data));
       lastResponse=data; render(data); setHealth(true,'API connected');
