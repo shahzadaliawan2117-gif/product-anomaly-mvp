@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Anomaly Detection — Test Console</title>
+  <style>
+    :root {
+      --bg:#07111f; --panel:#0d1a2b; --panel2:#101f32; --line:#22334a;
+      --text:#eef6ff; --muted:#90a4bd; --accent:#66d9ef; --accent2:#7cf7b8;
+      --danger:#ff6b7a; --warn:#ffc857; --good:#58e6a9; --shadow:0 18px 50px rgba(0,0,0,.3);
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:radial-gradient(circle at 15% 0%,#102941 0,#07111f 33%),var(--bg);color:var(--text);min-height:100vh}
+    .wrap{max-width:1380px;margin:0 auto;padding:26px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.brand h1{margin:0;font-size:clamp(25px,3vw,42px);letter-spacing:-.04em}.brand p{margin:9px 0 0;color:var(--muted);max-width:780px}.badge{padding:10px 14px;border:1px solid var(--line);border-radius:999px;background:#0a1727;color:var(--muted);white-space:nowrap}.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:8px;background:var(--warn)}.dot.ok{background:var(--good)}.dot.bad{background:var(--danger)}
+    .grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);gap:20px}@media(max-width:950px){.grid{grid-template-columns:1fr}.top{flex-direction:column}.wrap{padding:16px}}
+    .card{background:linear-gradient(180deg,rgba(16,31,50,.97),rgba(10,22,38,.97));border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.card h2{font-size:17px;margin:0}.head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}.body{padding:20px}.section{margin-bottom:19px}.label{display:flex;justify-content:space-between;gap:10px;margin:0 0 8px;font-size:13px;font-weight:700;color:#cfe1f6}.hint{font-weight:500;color:var(--muted)}input,textarea,select{width:100%;background:#071524;color:var(--text);border:1px solid #29405d;border-radius:12px;padding:12px 13px;outline:none;font:inherit}textarea{min-height:178px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;line-height:1.5}input:focus,textarea:focus,select:focus{border-color:#4ea7c6;box-shadow:0 0 0 3px rgba(102,217,239,.08)}
+    .source-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}.source-tabs button{background:#091827;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;font-weight:700}.source-tabs button.active{color:#07111f;background:var(--accent);border-color:var(--accent)}.source-panel{display:none}.source-panel.active{display:block}.filedrop{border:1px dashed #42617e;border-radius:14px;padding:18px;text-align:center;background:#081625}.filedrop input{margin-top:11px;background:transparent}
+    .preview{margin-top:14px;display:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#060d16;min-height:180px;align-items:center;justify-content:center}.preview img{max-width:100%;max-height:330px;display:block;margin:auto}.preview.show{display:flex}
+    .row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:end}@media(max-width:620px){.row{grid-template-columns:1fr}.row button{width:100%}}button.action{border:0;border-radius:11px;padding:12px 17px;font-weight:800;cursor:pointer;transition:.18s transform,.18s opacity;background:var(--accent);color:#06121f}button.action:hover{transform:translateY(-1px)}button.secondary{background:#182a40;color:#dceaff;border:1px solid #30455f}button.ghost{background:transparent;color:#b7cadf;border:1px solid #30455f}.run{width:100%;font-size:15px;padding:14px!important;background:linear-gradient(90deg,var(--accent),var(--accent2))!important}.run:disabled{opacity:.55;cursor:wait;transform:none}
+    .empty{padding:55px 22px;text-align:center;color:var(--muted)}.result{display:none}.result.show{display:block}.status-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:17px}.status{font-size:15px;font-weight:900;letter-spacing:.03em;padding:9px 12px;border-radius:10px;background:#172b3e}.status.good{background:rgba(88,230,169,.12);color:var(--good);border:1px solid rgba(88,230,169,.35)}.status.warn{background:rgba(255,200,87,.12);color:var(--warn);border:1px solid rgba(255,200,87,.35)}.status.bad{background:rgba(255,107,122,.12);color:var(--danger);border:1px solid rgba(255,107,122,.35)}.smallchip{padding:7px 10px;border-radius:999px;background:#0a1727;border:1px solid var(--line);font-size:12px;color:#bdd0e5}
+    .scores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}@media(max-width:520px){.scores{grid-template-columns:1fr}}.score{background:#081625;border:1px solid #1d3047;border-radius:12px;padding:11px}.score-top{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:8px}.score-top span:first-child{color:#b7c9dd;text-transform:capitalize}.score-top strong{font-size:14px}.bar{height:7px;background:#14263b;border-radius:99px;overflow:hidden}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#66d9ef,#7cf7b8);border-radius:99px}
+    .box{background:#081625;border:1px solid #1d3047;border-radius:13px;padding:14px;margin-top:12px}.box h3{margin:0 0 9px;font-size:13px;color:#bdd0e5}.box p{margin:0;color:#e7f0fb;line-height:1.55;font-size:13px}.issues{padding-left:19px;margin:0;color:#e7f0fb;font-size:13px;line-height:1.65}.json-head{display:flex;justify-content:space-between;align-items:center;margin-top:16px}.raw{background:#050d16;color:#bde7ff;white-space:pre-wrap;word-break:break-word;max-height:380px;overflow:auto;border:1px solid #1d3047;border-radius:13px;padding:14px;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:8px}.error{display:none;background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.35);color:#ffd9de;padding:12px 14px;border-radius:12px;margin-bottom:14px;font-size:13px;line-height:1.5}.error.show{display:block}.footer{color:#6f849e;font-size:12px;text-align:center;margin:22px 0 6px}.loading{display:inline-block;width:16px;height:16px;border:2px solid rgba(6,18,31,.25);border-top-color:#06121f;border-radius:50%;animation:spin .7s linear infinite;margin-right:7px;vertical-align:-3px}@keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <h1>Product-Aware Image QA Console</h1>
+      <p>Test product correctness, OCR-backed matching, image quality, visibility, composition, background, lighting and the final classification from one screen.</p>
+    </div>
+    <div class="badge"><span id="healthDot" class="dot"></span><span id="healthText">API not checked</span></div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <div class="head"><h2>Test Input</h2><button class="action ghost" id="sampleBtn">Load sample JSON</button></div>
+      <div class="body">
+        <div class="section">
+          <div class="label">API Base URL <span class="hint">FastAPI server</span></div>
+          <div class="row">
+            <input id="apiBase" value="http://127.0.0.1:8000" />
+            <button class="action secondary" id="healthBtn">Health check</button>
+            <button class="action ghost" id="docsBtn">Open API docs</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="label">Image source <span class="hint">choose exactly one</span></div>
+          <div class="source-tabs">
+            <button type="button" data-mode="file" class="active">Upload</button>
+            <button type="button" data-mode="url">Image URL</button>
+            <button type="button" data-mode="base64">Base64</button>
+          </div>
+          <div id="filePanel" class="source-panel active">
+            <div class="filedrop">
+              <strong>Choose a product image</strong><br><span class="hint">JPG / PNG / WEBP supported by backend loader</span>
+              <input id="imageFile" type="file" accept="image/*" />
+            </div>
+          </div>
+          <div id="urlPanel" class="source-panel"><input id="imageUrl" type="url" placeholder="https://example.com/product.jpg" /></div>
+          <div id="base64Panel" class="source-panel"><textarea id="imageBase64" placeholder="Paste base64 image string or data:image/...;base64,..."></textarea></div>
+          <div id="preview" class="preview"><img id="previewImg" alt="Selected image preview" /></div>
+        </div>
+
+        <div class="section">
+          <div class="label">Product JSON <span class="hint">missing optional fields are allowed</span></div>
+          <textarea id="productJson">{
+  "id": "12345",
+  "name": "Doliprane 1000 mg Comprime",
+  "category": "Medicament",
+  "brand": "Sanofi",
+  "laboratory": "Sanofi",
+  "dosage": "1000 mg",
+  "form": "Comprime",
+  "packaging": "Boite de 8 comprimes"
+}</textarea>
+        </div>
+        <div id="inputError" class="error"></div>
+        <button class="action run" id="analyzeBtn">Run Full Analysis</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="head"><h2>Analysis Result</h2><button class="action ghost" id="copyBtn" disabled>Copy JSON</button></div>
+      <div id="empty" class="empty">Run an analysis to see classification, scores, detected product, issues and raw diagnostics.</div>
+      <div id="result" class="result body">
+        <div class="status-row"><span id="status" class="status">—</span><span id="correctChip" class="smallchip"></span><span id="anomalyChip" class="smallchip"></span></div>
+        <div id="scores" class="scores"></div>
+        <div class="box"><h3>Detected Product</h3><p id="detected">—</p></div>
+        <div class="box"><h3>Explanation</h3><p id="explanation">—</p></div>
+        <div class="box"><h3>Issues / Anomalies</h3><ul id="issues" class="issues"></ul></div>
+        <div class="json-head"><div class="label" style="margin:0">Raw JSON response</div></div>
+        <pre id="raw" class="raw"></pre>
+      </div>
+    </section>
+  </div>
+  <div class="footer">Local MVP testing console • No external frontend libraries required</div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let mode = 'file';
+  let lastResponse = null;
+  const apiInput = $('apiBase');
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    apiInput.value = location.origin;
+  } else {
+    apiInput.value = 'http://127.0.0.1:8000';
+  }
+
+  document.querySelectorAll('.source-tabs button').forEach(btn => btn.addEventListener('click', () => {
+    mode = btn.dataset.mode;
+    document.querySelectorAll('.source-tabs button').forEach(b => b.classList.toggle('active', b === btn));
+    ['file','url','base64'].forEach(m => $(m+'Panel').classList.toggle('active', m === mode));
+    updatePreview();
+  }));
+
+  $('imageFile').addEventListener('change', updatePreview);
+  $('imageUrl').addEventListener('input', updatePreview);
+
+  function apiBase(){ return apiInput.value.trim().replace(/\/$/, ''); }
+  function setHealth(ok, text){ $('healthDot').className='dot '+(ok?'ok':'bad'); $('healthText').textContent=text; }
+  function showError(msg){ $('inputError').textContent=msg; $('inputError').classList.add('show'); }
+  function clearError(){ $('inputError').classList.remove('show'); }
+
+  function updatePreview(){
+    const box=$('preview'), img=$('previewImg');
+    box.classList.remove('show'); img.removeAttribute('src');
+    if(mode==='file' && $('imageFile').files[0]){
+      img.src=URL.createObjectURL($('imageFile').files[0]); box.classList.add('show');
+    } else if(mode==='url' && $('imageUrl').value.trim()){
+      img.src=$('imageUrl').value.trim(); box.classList.add('show');
+    } else if(mode==='base64' && $('imageBase64').value.trim().startsWith('data:image')){
+      img.src=$('imageBase64').value.trim(); box.classList.add('show');
+    }
+  }
+
+  $('sampleBtn').onclick=()=>{
+    $('productJson').value=JSON.stringify({id:'12345',name:'Doliprane 1000 mg Comprime',category:'Medicament',brand:'Sanofi',laboratory:'Sanofi',dosage:'1000 mg',form:'Comprime',packaging:'Boite de 8 comprimes'},null,2);
+  };
+
+  $('healthBtn').onclick=async()=>{
+    clearError(); setHealth(false,'Checking API...');
+    try{
+      const r=await fetch(apiBase()+'/health');
+      const data=await r.json();
+      if(!r.ok) throw new Error(JSON.stringify(data));
+      setHealth(data.status==='ok','API connected');
+    }catch(e){ setHealth(false,'API unavailable'); showError('Health check failed: '+e.message); }
+  };
+
+  $('docsBtn').onclick=()=>window.open(apiBase()+'/docs','_blank');
+
+  function validate(){
+    let meta;
+    try{ meta=JSON.parse($('productJson').value); }catch(e){ throw new Error('Product JSON is invalid: '+e.message); }
+    if(!meta || Array.isArray(meta) || typeof meta!=='object') throw new Error('Product JSON must be a JSON object.');
+    if(mode==='file' && !$('imageFile').files[0]) throw new Error('Please select an image file.');
+    if(mode==='url' && !$('imageUrl').value.trim()) throw new Error('Please enter an image URL.');
+    if(mode==='base64' && !$('imageBase64').value.trim()) throw new Error('Please paste a base64 image.');
+    return meta;
+  }
+
+  $('analyzeBtn').onclick=async()=>{
+    clearError();
+    const btn=$('analyzeBtn');
+    try{
+      validate();
+      btn.disabled=true; btn.innerHTML='<span class="loading"></span>Analyzing image...';
+      const fd=new FormData();
+      fd.append('product_json',$('productJson').value);
+      if(mode==='file') fd.append('image',$('imageFile').files[0]);
+      if(mode==='url') fd.append('image_url',$('imageUrl').value.trim());
+      if(mode==='base64') fd.append('image_base64',$('imageBase64').value.trim());
+      const r=await fetch(apiBase()+'/analyze',{method:'POST',body:fd});
+      let data; try{ data=await r.json(); }catch{ data={detail:'Server returned a non-JSON response.'}; }
+      if(!r.ok) throw new Error(typeof data.detail==='string'?data.detail:JSON.stringify(data));
+      lastResponse=data; render(data); setHealth(true,'API connected');
+    }catch(e){ showError(e.message); }
+    finally{ btn.disabled=false; btn.textContent='Run Full Analysis'; }
+  };
+
+  function statusClass(s){
+    if(s==='VALID') return 'good';
+    if(['VALID_BUT_LOW_QUALITY','LOW_IMAGE_QUALITY','ANOMALY'].includes(s)) return 'warn';
+    return 'bad';
+  }
+  function render(data){
+    $('empty').style.display='none'; $('result').classList.add('show'); $('copyBtn').disabled=false;
+    $('status').textContent=data.status || 'UNKNOWN'; $('status').className='status '+statusClass(data.status);
+    $('correctChip').textContent='Correct product: '+(data.is_correct_product?'Yes':'No');
+    $('anomalyChip').textContent='Anomaly: '+(data.is_anomaly?'Yes':'No');
+    const scores=$('scores'); scores.innerHTML='';
+    Object.entries(data.scores||{}).forEach(([k,v])=>{
+      if(v===null || v===undefined) return;
+      const n=Math.max(0,Math.min(100,Number(v)||0));
+      const el=document.createElement('div'); el.className='score';
+      el.innerHTML=`<div class="score-top"><span>${k.replaceAll('_',' ')}</span><strong>${Number(v).toFixed(Number(v)%1?1:0)}</strong></div><div class="bar"><i style="width:${n}%"></i></div>`;
+      scores.appendChild(el);
+    });
+    const dp=data.detected_product||{};
+    $('detected').textContent=[dp.name&&`Name: ${dp.name}`,dp.brand&&`Brand: ${dp.brand}`,dp.category&&`Category: ${dp.category}`,dp.dosage&&`Dosage: ${dp.dosage}`,dp.form&&`Form: ${dp.form}`,dp.quantity&&`Quantity: ${dp.quantity}`].filter(Boolean).join(' • ') || 'No confident product fields detected.';
+    $('explanation').textContent=data.explanation||'—';
+    const items=[...(data.anomaly_types||[]).map(x=>'Anomaly: '+x),...(data.issues||[])];
+    $('issues').innerHTML='';
+    (items.length?items:['No issues reported.']).forEach(x=>{const li=document.createElement('li');li.textContent=x;$('issues').appendChild(li)});
+    $('raw').textContent=JSON.stringify(data,null,2);
+  }
+
+  $('copyBtn').onclick=async()=>{
+    if(!lastResponse) return;
+    await navigator.clipboard.writeText(JSON.stringify(lastResponse,null,2));
+    const b=$('copyBtn'), old=b.textContent;b.textContent='Copied';setTimeout(()=>b.textContent=old,1100);
+  };
+
+  setTimeout(()=>$('healthBtn').click(),350);
+})();
+</script>
+</body>
+</html>
